@@ -7,6 +7,7 @@ var cors = require("cors");
 var jsonfl = require('jsonfile');
 var cron = require('node-cron');
 var fs = require('fs');
+var ip = require('ip');
 
 var bcfile = './tmp/coinsafe.json';
 var debugfl = './tmp/hcoinsave.txt';
@@ -73,14 +74,13 @@ var initHttpServer = () => {
         console.log(sockets.map(s => s._socket.remoteAddress + ':' + s._socket.remotePort));
     });
     app.post('/addPeer',urlencodedParser, (req, res) => {
-        var x = req.body.port;
-        console.log(x);
-        var tpr = 'ws://localhost:'+x;
+        var conto = req.body.address;
+        var tpr = 'ws://'+conto+":6001";
         console.log(tpr);
         connectToPeers([tpr]);
         res.send("DONE");
     });
-    app.listen(http_port, () => console.log('Listening http on port: ' + http_port));
+    app.listen(http_port,ip.address(),() => console.log('Listening/Sending on host'+ip.address()+'   Listening http on port: ' + http_port));
 };
 
 

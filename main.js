@@ -77,9 +77,8 @@ var initHttpServer = () => {
         console.log(tpr);
         connectToPeers([tpr]);
         res.send("DONE");
-        
     });
-    app.listen(http_port,ip.address(), () => console.log('Listening http on port: ' + http_port));
+    app.listen(http_port,ip.address(), () => console.log('Listening on: '+ ip.address()+':'+ http_port));
 };
 
 
@@ -95,7 +94,6 @@ var initConnection = (ws) => {
     initMessageHandler(ws);
     initErrorHandler(ws);
     write(ws, queryChainLengthMsg());
-    console.log(ws);
     writepeers((err)=>{
         if(err) throw err;
         console.log("Peer saved");
@@ -195,6 +193,7 @@ var handleBlockchainResponse = (message) => {
             writecontentbcf((err)=>{
                 console.log("Blockchain saved");
             });
+            writedebug("Blockchain:  " + latestBlockReceived.index + "     appended at " + new Date().getTime() / 1000 + "to Chain");
         } else if (receivedBlocks.length === 1) {
             console.log("We have to query the chain from our peer");
             broadcast(queryAllMsg());
@@ -262,7 +261,9 @@ var writedebug = (data) => fs.appendFile(debugfl,data + "\r\n",(err)=> {
 })
 
 var writepeers = (canbok) =>{
-    jsonfl.writeFile(peersfl,sockets.map(s => s._socket.remoteAddress + ':' + s._socket.remotePort),(err)=>{
+    var zw = sockets.map(s => "ws://"+ s._socket.remoteAddress + ':' + s._socket.remotePort);
+    console.log(zw);
+    jsonfl.writeFile(peersfl, zw ,(err)=>{
         if(err) throw err;
         canbok(null);
     })
@@ -296,11 +297,15 @@ readcontentbcf((err,data)=>{
     blockchain = data;
 })
 
-/*readpeers((err,obj)=>{
-    console.log(obj);
-    if(err){}
-    connectToPeers([obj]);
-})*/
+readpeers((err,obj)=>{
+    console.log(obj.length);
+    console.log(obj[0]);
+    if(err){throw err};
+    for(var i= 0; i < obj.length;i++){
+        console.log(obj[i]);
+        connectToPeers([obj[i]]);
+    }
+})
 
 
 

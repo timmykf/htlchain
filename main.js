@@ -76,10 +76,6 @@ var initHttpServer = () => {
         var tpr = 'ws://'+peeradd;
         console.log(tpr);
         connectToPeers([tpr]);
-        writepeers((err)=>{
-            if(err) throw err;
-            console.log("Peer saved");
-        })
         res.send("DONE");
         
     });
@@ -100,6 +96,10 @@ var initConnection = (ws) => {
     initErrorHandler(ws);
     write(ws, queryChainLengthMsg());
     console.log(ws);
+    writepeers((err)=>{
+        if(err) throw err;
+        console.log("Peer saved");
+    })
 };
 
 var initMessageHandler = (ws) => {

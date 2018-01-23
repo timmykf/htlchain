@@ -198,7 +198,7 @@ var handleBlockchainResponse = (message) => {
         } else if (receivedBlocks.length === 1) {
             console.log("We have to query the chain from our peer");
             broadcast(queryAllMsg());
-            writedebug("Blockchain:  " + newBlock.index + "     sent at " + new Date().getTime() / 1000 + "to All User");
+            writedebug("Blockchain:  " + getLatestBlock.index + "     sent at " + new Date().getTime() / 1000 + "to All User");
         } else {
             console.log("Received blockchain is longer than current blockchain");
             replaceChain(receivedBlocks);

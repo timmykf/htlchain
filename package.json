@@ -1,6 +1,6 @@
 {
-  "name": "naivechain",
-  "version": "1.0.0",
+  "name": "HTLChain",
+  "version": "1.1",
   "description": "",
   "scripts": {
     "start": "node main.js"
@@ -14,9 +14,9 @@
     "jsonfile": "^4.0.0",
     "node-cron": "^1.2.1",
     "ws": "^1.1.0"
-
   },
   "engines": {
     "node": ">=4.3.2"
   }
 }
+

@@ -301,10 +301,11 @@ readpeers((err,obj)=>{
     console.log(obj.length);
     console.log(obj[0]);
     if(err){throw err};
-    for(var i= 0; i < obj.length;i++){
-        console.log(obj[i]);
-        connectToPeers([obj[i]]);
-    }
+    if(obj.length===0){console.log("no peers found!")}
+        else{for(var i= 0; i < obj.length;i++){
+            console.log(obj[i]);
+            connectToPeers([obj[i]]);
+        }}
 })
 
 

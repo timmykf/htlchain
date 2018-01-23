@@ -1,3 +1,4 @@
+
 'use strict';
 var CryptoJS = require("crypto-js");
 var express = require("express");
@@ -11,6 +12,7 @@ var ip = require('ip');
 
 var bcfile = './tmp/coinsafe.json';
 var debugfl = './tmp/hcoinsave.txt';
+var peersfl = './tmp/standpeers.json';
 
 
 var task = cron.schedule('*/3 * * * *',function(){
@@ -54,7 +56,6 @@ var initHttpServer = () => {
     app.use(cors());
     app.get('/blocks', function(req, res) { 
         res.send(JSON.stringify(blockchain));
-        console.log("2");
     });
     app.post('/mineBlock',urlencodedParser, (req, res) => {
 
@@ -63,10 +64,6 @@ var initHttpServer = () => {
         addBlock(newBlock);
         broadcast(responseLatestMsg());
         console.log('block added: ' + JSON.stringify(newBlock));
-        writedebug("Block:  " + newBlock.index + "     chained at " + new Date().getTime() / 1000 + "from User: "+req.body.name);
-        writecontentbcf((err)=>{
-            console.log("Blockchain saved");
-        });
         res.send("DONE");
     });
     app.get('/peers', (req, res) => {
@@ -74,13 +71,19 @@ var initHttpServer = () => {
         console.log(sockets.map(s => s._socket.remoteAddress + ':' + s._socket.remotePort));
     });
     app.post('/addPeer',urlencodedParser, (req, res) => {
-        var conto = req.body.address;
-        var tpr = 'ws://'+conto+":6001";
+        var peeradd = req.body.address;
+        console.log(peeradd);
+        var tpr = 'ws://'+peeradd;
         console.log(tpr);
         connectToPeers([tpr]);
+        writepeers((err)=>{
+            if(err) throw err;
+            console.log("Peer saved");
+        })
         res.send("DONE");
+        
     });
-    app.listen(http_port,ip.address(),() => console.log('Listening/Sending on host'+ip.address()+'   Listening http on port: ' + http_port));
+    app.listen(http_port,ip.address(), () => console.log('Listening http on port: ' + http_port));
 };
 
 
@@ -96,6 +99,7 @@ var initConnection = (ws) => {
     initMessageHandler(ws);
     initErrorHandler(ws);
     write(ws, queryChainLengthMsg());
+    console.log(ws);
 };
 
 var initMessageHandler = (ws) => {
@@ -146,6 +150,10 @@ var calculateHash = (index, previousHash, timestamp, data) => {
 var addBlock = (newBlock) => {
     if (isValidNewBlock(newBlock, getLatestBlock())) {
         blockchain.push(newBlock);
+        writedebug("Block:  " + newBlock.index + "     chained at " + new Date().getTime() / 1000 + "from User: "+ip.address());
+        writecontentbcf((err)=>{
+            console.log("Blockchain saved");
+        });
     }
 };
 
@@ -169,7 +177,7 @@ var connectToPeers = (newPeers) => {
         var ws = new WebSocket(peer);
         ws.on('open', () => initConnection(ws));
         ws.on('error', () => {
-            console.log('connection failed')
+            console.log('connection failed');
         });
     });
 };
@@ -184,12 +192,19 @@ var handleBlockchainResponse = (message) => {
             console.log("We can append the received block to our chain");
             blockchain.push(latestBlockReceived);
             broadcast(responseLatestMsg());
+            writecontentbcf((err)=>{
+                console.log("Blockchain saved");
+            });
         } else if (receivedBlocks.length === 1) {
             console.log("We have to query the chain from our peer");
             broadcast(queryAllMsg());
+            writedebug("Blockchain:  " + newBlock.index + "     sent at " + new Date().getTime() / 1000 + "to All User");
         } else {
             console.log("Received blockchain is longer than current blockchain");
             replaceChain(receivedBlocks);
+            writecontentbcf((err)=>{
+                console.log("Blockchain saved");
+            });
         }
     } else {
         console.log('received blockchain is not longer than received blockchain. Do nothing');
@@ -246,6 +261,20 @@ var writedebug = (data) => fs.appendFile(debugfl,data + "\r\n",(err)=> {
     console.log("Debugfile upduted")
 })
 
+var writepeers = (canbok) =>{
+    jsonfl.writeFile(peersfl,sockets.map(s => s._socket.remoteAddress + ':' + s._socket.remotePort),(err)=>{
+        if(err) throw err;
+        canbok(null);
+    })
+}
+
+var readpeers = (snobu)=>{
+    jsonfl.readFile(peersfl,(err,obj)=>{
+        if(err)throw err;
+        snobu(null,obj);
+    })
+}
+ 
 var readcontentbcf = (cb) =>{
     jsonfl.readFile(bcfile,(err,obj)=>{
         if(err) throw err;
@@ -266,6 +295,12 @@ readcontentbcf((err,data)=>{
     console.log(data);
     blockchain = data;
 })
+
+/*readpeers((err,obj)=>{
+    console.log(obj);
+    if(err){}
+    connectToPeers([obj]);
+})*/
 
 
 
